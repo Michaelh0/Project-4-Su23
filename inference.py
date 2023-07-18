@@ -60,9 +60,40 @@ def constructBayesNet(gameState: hunters.GameState):
     edges = []
     variableDomainsDict = {}
 
-    "*** YOUR CODE HERE ***"
-    raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    variables = variables + [PAC]
+    variables = variables + [GHOST0]
+    variables = variables + [GHOST1]
+    variables = variables + [OBS0]
+    variables = variables + [OBS1]
+
+    edges = edges + [(PAC,OBS0)]
+    edges = edges + [(PAC,OBS1)]
+    edges = edges + [(GHOST0,OBS0)]
+    edges = edges + [(GHOST1,OBS1)]
+     
+    pacList = []
+    for i in range(X_RANGE):
+        for j in range(Y_RANGE):
+            pacList = pacList + [(i,j)]
+    
+    variableDomainsDict[PAC] = pacList
+    variableDomainsDict[GHOST0] = pacList
+    variableDomainsDict[GHOST1] = pacList
+    ghostList = pacList
+
+    observeList = []
+    for pacy in pacList:
+        for ghosty in ghostList:
+            matdistance = abs(pacy[0] - ghosty[0]) + abs(pacy[1] - ghosty[1])
+            observeList = observeList + [matdistance]
+            observeList = observeList + [matdistance + MAX_NOISE]
+            if matdistance - MAX_NOISE > 0:
+                observeList = observeList + [matdistance - MAX_NOISE]
+
+    observeList = list(set(observeList))
+
+    variableDomainsDict[OBS0] = observeList
+    variableDomainsDict[OBS1] = observeList
 
     net = bn.constructEmptyBayesNet(variables, edges, variableDomainsDict)
     return net
@@ -181,9 +212,39 @@ def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
                                    set(evidenceDict.keys())
             eliminationOrder = sorted(list(eliminationVariables))
 
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        # initialize return variables and the variables to eliminate
+        evidenceVariablesSet = set(evidenceDict.keys())
+        queryVariablesSet = set(queryVariables)
+
+        # grab all factors where we know the evidence variables (to reduce the size of the tables)
+        currentFactorsList = bayesNet.getAllCPTsWithEvidence(evidenceDict)
+        #print(currentFactorsList)
+        incrementallyMarginalizedJoint = 0
+
+        for partial in eliminationOrder:    
+            currentFactorsList, joinedFactor = joinFactorsByVariable(currentFactorsList, partial)
+            currentFactorsList.append(joinedFactor)
+    
+            removed = False
+            #print(currentFactorsList)
+            
+            for factor in currentFactorsList:
+                if (list(factor.unconditionedVariables())) == [partial]:
+                    currentFactorsList.remove(factor) 
+                    removed = True
+            #fullJoint = joinFactors(currentFactorsList)
+            if not removed:
+                for factor in currentFactorsList:
+                    if (partial in list(factor.unconditionedVariables())):
+                        incrementallyMarginalizedJoint = eliminate(joinedFactor, partial)
+                        currentFactorsList.remove(joinedFactor)
+                        currentFactorsList.append(incrementallyMarginalizedJoint)
+        #print(currentFactorsList)
+        fullJoint = joinFactors(currentFactorsList)
+        fullJointOverQueryAndEvidence = fullJoint
+        queryConditionedOnEvidence = normalize(fullJointOverQueryAndEvidence)
+
+        return queryConditionedOnEvidence
 
 
     return inferenceByVariableElimination

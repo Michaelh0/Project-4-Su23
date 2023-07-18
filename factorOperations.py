@@ -100,10 +100,43 @@ def joinFactors(factors: List[Factor]):
                     "Input factors: \n" +
                     "\n".join(map(str, factors)))
 
+    listedFactors = list(factors)
+    newFactor = 0
+    newConditional = set()
+    newUnconditional = set()
+    for condition in listedFactors:
+        newConditional = newConditional.union(set(condition.conditionedVariables()))
 
-    "*** YOUR CODE HERE ***"
-    raiseNotDefined()
-    "*** END YOUR CODE HERE ***"
+    for uncondition in listedFactors:
+        newUnconditional = newUnconditional.union(set(uncondition.unconditionedVariables()))
+
+    #intersect = newUnconditional.intersection(newConditional)
+    difference_condition = newConditional.difference(newUnconditional)
+    #rest = newUnconditional.difference(newConditional)
+    newConditional = list(newConditional)
+    newUnconditional = list(newUnconditional)
+    
+    #new factor.conditioned = factors[0].unconditioned + factors[1].unconditioned
+    
+
+    firstDict = listedFactors[0].variableDomainsDict()
+    for diction in listedFactors[1:]:
+        secondDict = diction.variableDomainsDict()
+        firstDict.update(secondDict)
+    
+    #getting all factors for creating new factor
+    #newUnconditional =  list(rest)
+    newConditional =  list(difference_condition) #+ list(difference_condition2)
+    #print(newConditional,newUnconditional)
+    newFactor = Factor(newUnconditional, newConditional,firstDict)
+    
+    x = newFactor.getAllPossibleAssignmentDicts()
+    for i in x:
+        productProb = 1
+        for prob in listedFactors:
+            productProb = productProb * prob.getProbability(i)
+        newFactor.setProbability(i,productProb)
+    return newFactor
 
 ########### ########### ###########
 ########### QUESTION 3  ###########
@@ -152,9 +185,19 @@ def eliminateWithCallTracking(callTrackingList=None):
                     "eliminationVariable:" + str(eliminationVariable) + "\n" +\
                     "unconditionedVariables: " + str(factor.unconditionedVariables()))
 
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        uncondition = factor.unconditionedVariables()
+        condition = factor.conditionedVariables()
+        allPossible = factor.getAllPossibleAssignmentDicts()
+        uncondition.remove(eliminationVariable)
+        newFactor = Factor(list(uncondition),list(condition),factor.variableDomainsDict())
+        
+        for i in allPossible:
+            #print(factor.getProbability(i))
+            #print(newFactor.getProbability(i))
+            newFactor.setProbability(i, factor.getProbability(i)+ newFactor.getProbability(i))
+
+        #print(newFactor)
+        return newFactor
 
     return eliminate
 
