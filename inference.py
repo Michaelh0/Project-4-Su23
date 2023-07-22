@@ -653,11 +653,11 @@ class ExactInference(InferenceModule):
         newDict = {}
         positions = self.allPositions
         for GhostPositionPlus1 in positions:
-            sum =0
-            for GhostPosition in positions:
-                newPosDist = self.getPositionDistribution(gameState, GhostPosition) 
-                sum = sum + newPosDist[GhostPositionPlus1] * self.beliefs[GhostPosition]
-            newDict[GhostPositionPlus1] = sum
+            newDict[GhostPositionPlus1] = 0
+        for GhostPosition in positions:
+            newPosDist = self.getPositionDistribution(gameState, GhostPosition) 
+            for GhostPositionPlus1 in positions:
+                newDict[GhostPositionPlus1] = newDict[GhostPositionPlus1] + newPosDist[GhostPositionPlus1] * self.beliefs[GhostPosition]
 
         for GhostPositionPlus1 in positions:
             self.beliefs[GhostPositionPlus1] = newDict[GhostPositionPlus1] 
@@ -690,9 +690,9 @@ class ParticleFilter(InferenceModule):
         self.particles for the list of particles.
         """
         self.particles = []
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        totalParticles = self.numParticles
+
+        position = self.legalPositions
 
     def getBeliefDistribution(self):
         """

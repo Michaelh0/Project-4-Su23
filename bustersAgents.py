@@ -148,6 +148,49 @@ class GreedyBustersAgent(BustersAgent):
         livingGhostPositionDistributions = \
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        
+        
+        maximum = {}
+        
+        count = 0
+        for ghost in livingGhostPositionDistributions:
+            inf = self.inferenceModules[count]
+            ghostPossible = inf.allPositions
+            first = True
+            #print(ghostPossible)
+            for possible in ghostPossible:
+                if first:
+                    maximum[count] = possible
+                    first = False
+                elif ghost[maximum[count]] < ghost[possible]:
+                    maximum[count] = possible
+                    
+            #maybe somewhere else it updates?
+            #observation = inf.observe(gameState)                
+            #ghost.observeUpdate(observation, gameState) 
+            #ghost.elapseTime(gameState)
+            count += 1
+        print(maximum)
+        minimize = {}
+        for action in legal:
+            successorPosition = Actions.getSuccessor(pacmanPosition, action)
+            pos1 = successorPosition
+            first = True
+            for pos2 in maximum.values():
+                mazeDistance = self.distancer.getDistance(pos1, pos2)
+                if first:
+                    minimize[action] = mazeDistance
+                    first = False
+                if mazeDistance < minimize[action]:
+                    minimize[action] = mazeDistance
+        first = True
+        chosenAction = ""
+        #print(minimize)
+        for action in minimize.keys():
+            if first:
+                chosenAction = action
+                first = False
+            elif minimize[action] < minimize[chosenAction]:
+                chosenAction = action
+        #print(chosenAction)
+        return chosenAction
