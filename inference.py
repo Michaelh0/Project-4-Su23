@@ -535,7 +535,7 @@ class InferenceModule:
 
     def setGhostPositions(self, gameState, ghostPositions):
         """
-        Sets the position of all ghosts to the values in ghostPositions.
+        Sets the position of all ghostxs to the values in ghostPositions.
         """
         for index, pos in enumerate(ghostPositions):
             conf = game.Configuration(pos, game.Directions.STOP)
@@ -694,6 +694,17 @@ class ParticleFilter(InferenceModule):
 
         position = self.legalPositions
 
+        each  = totalParticles / len(position) 
+        leftover =  totalParticles % len(position)
+
+        for eaches in position:
+            for i in range(int(each)):
+                self.particles = self.particles + [eaches]
+            #if leftover > 0:
+             #   self.particles = self.particles + [eaches]
+              #  leftover -= 1
+
+
     def getBeliefDistribution(self):
         """
         Return the agent's current belief state, a distribution over ghost
@@ -702,9 +713,14 @@ class ParticleFilter(InferenceModule):
 
         This function should return a normalized distribution.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        new = DiscreteDistribution()
+        for each in self.particles:
+            new[each] = 0
+        for each in self.particles:
+            new[each] = new[each] + 1
+
+        new.normalize()
+        return new
     
     ########### ########### ###########
     ########### QUESTION 10 ###########
@@ -722,10 +738,26 @@ class ParticleFilter(InferenceModule):
         be reinitialized by calling initializeUniformly. The total method of
         the DiscreteDistribution may be useful.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
-    
+        sum = 0
+        weight = []
+        for i in range(len(self.particles)):
+            # print(position)
+            observeProbGiven = self.getObservationProb(observation, gameState.getPacmanPosition(),self.particles[i], self.getJailPosition())
+            weight = weight + [observeProbGiven]
+            sum = sum + weight[i]
+        if sum == 0:
+            self.initializeUniformly(gameState)
+        else:
+            new = DiscreteDistribution()
+            for each in self.particles:
+                new[each] = 0
+            counter = 0
+            for each in self.particles:
+                new[each] = new[each] + weight[counter]
+                counter += 1
+            self.particles = [new.sample() for _ in range(self.numParticles)]
+            
+        
     ########### ########### ###########
     ########### QUESTION 11 ###########
     ########### ########### ###########
@@ -735,6 +767,11 @@ class ParticleFilter(InferenceModule):
         Sample each particle's next state based on its current state and the
         gameState.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-        "*** END YOUR CODE HERE ***"
+        newList = []
+        repeated = {}
+        for position in self.particles:
+            if not position in repeated.keys():
+                newPosDist = self.getPositionDistribution(gameState, position)
+                repeated[position] = newPosDist
+            newList = newList + [repeated[position].sample()]
+        self.particles = newList
